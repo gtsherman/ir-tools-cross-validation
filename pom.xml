@@ -54,7 +54,7 @@
     </dependency>
     <dependency>
     	<groupId>edu.gslis</groupId>
-    	<artifactId>entities</artifactId>
+    	<artifactId>utils</artifactId>
     	<version>0.0.1-SNAPSHOT</version>
     </dependency>
     <dependency>

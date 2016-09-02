@@ -15,9 +15,9 @@ import edu.gslis.output.FormattedOutputTrecEval;
 import edu.gslis.queries.GQueries;
 import edu.gslis.queries.GQueriesJsonImpl;
 import edu.gslis.searchhits.SearchHitsBatch;
-import edu.gslis.utils.Configuration;
-import edu.gslis.utils.SimpleConfiguration;
 import edu.gslis.utils.Stopper;
+import edu.gslis.utils.config.Configuration;
+import edu.gslis.utils.config.SimpleConfiguration;
 
 public class RM3CrossValidationDemo {
 
