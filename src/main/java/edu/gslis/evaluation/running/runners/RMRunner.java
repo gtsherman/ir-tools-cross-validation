@@ -1,5 +1,6 @@
 package edu.gslis.evaluation.running.runners;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -15,12 +16,14 @@ import edu.gslis.searchhits.SearchHits;
 import edu.gslis.searchhits.SearchHitsBatch;
 import edu.gslis.textrepresentation.FeatureVector;
 import edu.gslis.utils.Stopper;
+import edu.gslis.utils.readers.RelevanceModelReader;
 
 public class RMRunner implements QueryRunner {
 
 	public static final String ORIG_QUERY_WEIGHT = "original";
 	
 	private IndexWrapperIndriImpl index;
+	private String rmsDir;
 	private Stopper stopper;
 	private int fbDocs;
 	private int fbTerms;
@@ -28,12 +31,21 @@ public class RMRunner implements QueryRunner {
 	private Map<GQuery, FeatureVector> queryRMs;
 	
 	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper) {
-		this(index, stopper, 20, 20);
+		this(index, stopper, null, 20, 20);
+	}
+	
+	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper, String rmsDir) {
+		this(index, stopper, rmsDir, 20, 20);
 	}
 	
 	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper, int fbDocs, int fbTerms) {
+		this(index, stopper, null, fbDocs, fbTerms);
+	}
+	
+	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper, String rmsDir, int fbDocs, int fbTerms) {
 		this.index = index;
 		this.stopper = stopper;
+		this.rmsDir = rmsDir;
 		this.fbDocs = fbDocs;
 		this.fbTerms = fbTerms;
 	}
@@ -62,9 +74,13 @@ public class RMRunner implements QueryRunner {
 	}
 
 	public SearchHitsBatch run(GQueries queries, int numResults, Map<String, Double> params) {
-		// Build the RMs and store them so we don't have to do it each time this is run
+		// Build or read the RMs and store them so we don't have to do it each time this is run
 		if (queryRMs == null) {
-			precomputeRMs(queries, fbDocs, fbTerms);
+			if (rmsDir == null) {
+				readRMs(queries);
+			} else {
+				precomputeRMs(queries, fbDocs, fbTerms);
+			}
 		}
 
 		SearchHitsBatch batchResults = new SearchHitsBatch();
@@ -85,7 +101,7 @@ public class RMRunner implements QueryRunner {
 		return batchResults;
 	}
 	
-	private Map<GQuery, FeatureVector> precomputeRMs(GQueries queries, int fbDocs, int fbTerms) {
+	private void precomputeRMs(GQueries queries, int fbDocs, int fbTerms) {
 		Map<GQuery, FeatureVector> queryRMs = new HashMap<GQuery, FeatureVector>();
 		
 		Iterator<GQuery> queryIt = queries.iterator();
@@ -108,7 +124,20 @@ public class RMRunner implements QueryRunner {
 			queryRMs.put(query, rmVec);
 		}
 		
-		return queryRMs;
+		this.queryRMs = queryRMs;
+	}
+	
+	private void readRMs(GQueries queries) {
+		Map<GQuery, FeatureVector> queryRMs = new HashMap<GQuery, FeatureVector>();
+		
+		Iterator<GQuery> queryIt = queries.iterator();
+		while (queryIt.hasNext()) {
+			GQuery query = queryIt.next();
+			RelevanceModelReader reader = new RelevanceModelReader(new File(rmsDir+File.pathSeparator+query.getTitle()));
+			queryRMs.put(query, reader.getFeatureVector());
+		}
+		
+		this.queryRMs = queryRMs;
 	}
 
 }
