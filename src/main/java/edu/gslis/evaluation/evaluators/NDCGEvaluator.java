@@ -75,6 +75,10 @@ public class NDCGEvaluator implements Evaluator {
 	public double ndcg(int rankCutoff, String query, SearchHits results, Qrels qrels) {
 		double dcg = dcg(rank, query, results, qrels);
 		double idcg = idcg(rank, query, qrels);
+		if (idcg == 0) {
+			System.err.println("No relevant documents for query "+query+"?");
+			return 0;
+		}
 		return dcg / idcg;
 	}
 	
@@ -132,6 +136,11 @@ public class NDCGEvaluator implements Evaluator {
 		SearchHits idealResults = new SearchHits();
 		
 		Set<String> relDocs = qrels.getRelDocs(query);
+
+		if (relDocs == null) {
+			return dcg(rankCutoff, query, idealResults, qrels);
+		}
+
 		for (String doc : relDocs) {
 			int relLevel = qrels.getRelLevel(query, doc);
 
