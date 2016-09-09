@@ -75,12 +75,10 @@ public class RMRunner implements QueryRunner {
 
 	public SearchHitsBatch run(GQueries queries, int numResults, Map<String, Double> params) {
 		// Build or read the RMs and store them so we don't have to do it each time this is run
-		if (queryRMs == null) {
-			if (rmsDir == null) {
-				readRMs(queries);
-			} else {
-				precomputeRMs(queries, fbDocs, fbTerms);
-			}
+		if (rmsDir != null) {
+			readRMs(queries);
+		} else {
+			precomputeRMs(queries, fbDocs, fbTerms);
 		}
 
 		SearchHitsBatch batchResults = new SearchHitsBatch();
@@ -107,21 +105,23 @@ public class RMRunner implements QueryRunner {
 		Iterator<GQuery> queryIt = queries.iterator();
 		while (queryIt.hasNext()) {
 			GQuery query = queryIt.next();
-			query.applyStopper(stopper);
+			if (!queryRMs.containsKey(query)) {
+				query.applyStopper(stopper);
 
-			FeedbackRelevanceModel rm1 = new FeedbackRelevanceModel();
-			rm1.setDocCount(20);
-			rm1.setTermCount(20);
-			rm1.setIndex(index);
-			rm1.setStopper(stopper);
-			rm1.setOriginalQuery(query);
-			
-			rm1.build();
-			
-			FeatureVector rmVec = rm1.asGquery().getFeatureVector();
-			rmVec.normalize();
-			
-			queryRMs.put(query, rmVec);
+				FeedbackRelevanceModel rm1 = new FeedbackRelevanceModel();
+				rm1.setDocCount(20);
+				rm1.setTermCount(20);
+				rm1.setIndex(index);
+				rm1.setStopper(stopper);
+				rm1.setOriginalQuery(query);
+				
+				rm1.build();
+				
+				FeatureVector rmVec = rm1.asGquery().getFeatureVector();
+				rmVec.normalize();
+				
+				queryRMs.put(query, rmVec);
+			}
 		}
 		
 		this.queryRMs = queryRMs;
@@ -133,8 +133,10 @@ public class RMRunner implements QueryRunner {
 		Iterator<GQuery> queryIt = queries.iterator();
 		while (queryIt.hasNext()) {
 			GQuery query = queryIt.next();
-			RelevanceModelReader reader = new RelevanceModelReader(new File(rmsDir+File.pathSeparator+query.getTitle()));
-			queryRMs.put(query, reader.getFeatureVector());
+			if (!queryRMs.containsKey(query)) {
+				RelevanceModelReader reader = new RelevanceModelReader(new File(rmsDir+File.pathSeparator+query.getTitle()));
+				queryRMs.put(query, reader.getFeatureVector());
+			}
 		}
 		
 		this.queryRMs = queryRMs;
