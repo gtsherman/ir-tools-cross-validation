@@ -21,33 +21,23 @@ import edu.gslis.utils.readers.RelevanceModelReader;
 public class RMRunner implements QueryRunner {
 
 	public static final String ORIG_QUERY_WEIGHT = "original";
+	public static final String FEEDBACK_DOCUMENTS = "fbDocs";
+	public static final String FEEDBACK_TERMS = "fbTerms";
 	
 	private IndexWrapperIndriImpl index;
 	private String rmsDir;
 	private Stopper stopper;
-	private int fbDocs;
-	private int fbTerms;
 	
 	private Map<GQuery, FeatureVector> queryRMs;
 	
 	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper) {
-		this(index, stopper, null, 20, 20);
+		this(index, stopper, null);
 	}
 	
 	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper, String rmsDir) {
-		this(index, stopper, rmsDir, 20, 20);
-	}
-	
-	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper, int fbDocs, int fbTerms) {
-		this(index, stopper, null, fbDocs, fbTerms);
-	}
-	
-	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper, String rmsDir, int fbDocs, int fbTerms) {
 		this.index = index;
 		this.stopper = stopper;
 		this.rmsDir = rmsDir;
-		this.fbDocs = fbDocs;
-		this.fbTerms = fbTerms;
 	}
 	
 	public Map<String, Double> sweep(GQueries queries, Evaluator evaluator, Qrels qrels) {
@@ -74,19 +64,42 @@ public class RMRunner implements QueryRunner {
 	}
 
 	public SearchHitsBatch run(GQueries queries, int numResults, Map<String, Double> params) {
-		// Build or read the RMs and store them so we don't have to do it each time this is run
+		// Read the RMs and store them so we don't have to do it each time this is run,
+		// but implies that fbdocs and fbterms will not change.
 		if (rmsDir != null) {
 			readRMs(queries);
-		} else {
-			precomputeRMs(queries, fbDocs, fbTerms);
 		}
 
 		SearchHitsBatch batchResults = new SearchHitsBatch();
 		Iterator<GQuery> queryIt = queries.iterator();
 		while (queryIt.hasNext()) {
 			GQuery query = queryIt.next();
-			
-			FeatureVector rmVec = queryRMs.get(query);
+			query.applyStopper(stopper);
+
+			FeatureVector rmVec;
+			if (rmsDir != null) {
+				rmVec = queryRMs.get(query);
+			} else {
+				FeedbackRelevanceModel rm1 = new FeedbackRelevanceModel();
+				try {
+					rm1.setDocCount(params.get(FEEDBACK_DOCUMENTS).intValue());
+				} catch (NullPointerException e) {
+					rm1.setDocCount(20);
+				}
+				try {
+					rm1.setTermCount(params.get(FEEDBACK_TERMS).intValue());
+				} catch (NullPointerException e) {
+					rm1.setTermCount(20);
+				}
+				rm1.setIndex(index);
+				rm1.setStopper(stopper);
+				rm1.setOriginalQuery(query);
+				
+				rm1.build();
+				rmVec = rm1.asGquery().getFeatureVector();
+				rmVec.normalize();
+			}
+
 			FeatureVector rm3 = FeatureVector.interpolate(query.getFeatureVector(), rmVec, params.get(ORIG_QUERY_WEIGHT));
 			
 			GQuery newQuery = new GQuery();
@@ -98,35 +111,7 @@ public class RMRunner implements QueryRunner {
 		}
 		return batchResults;
 	}
-	
-	private void precomputeRMs(GQueries queries, int fbDocs, int fbTerms) {
-		Map<GQuery, FeatureVector> queryRMs = new HashMap<GQuery, FeatureVector>();
-		
-		Iterator<GQuery> queryIt = queries.iterator();
-		while (queryIt.hasNext()) {
-			GQuery query = queryIt.next();
-			if (!queryRMs.containsKey(query)) {
-				query.applyStopper(stopper);
 
-				FeedbackRelevanceModel rm1 = new FeedbackRelevanceModel();
-				rm1.setDocCount(20);
-				rm1.setTermCount(20);
-				rm1.setIndex(index);
-				rm1.setStopper(stopper);
-				rm1.setOriginalQuery(query);
-				
-				rm1.build();
-				
-				FeatureVector rmVec = rm1.asGquery().getFeatureVector();
-				rmVec.normalize();
-				
-				queryRMs.put(query, rmVec);
-			}
-		}
-		
-		this.queryRMs = queryRMs;
-	}
-	
 	private void readRMs(GQueries queries) {
 		Map<GQuery, FeatureVector> queryRMs = new HashMap<GQuery, FeatureVector>();
 		
