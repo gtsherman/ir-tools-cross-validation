@@ -3,8 +3,14 @@ package edu.gslis.evaluation.evaluators;
 import edu.gslis.eval.Qrels;
 import edu.gslis.searchhits.SearchHitsBatch;
 
-public interface Evaluator {
+public abstract class Evaluator {
 	
-	public double evaluate(SearchHitsBatch batchResults, Qrels qrels);
+	protected Qrels qrels;
+	
+	public Evaluator(Qrels qrels) {
+		this.qrels = qrels;
+	}
+	
+	public abstract double evaluate(SearchHitsBatch batchResults);
 
 }

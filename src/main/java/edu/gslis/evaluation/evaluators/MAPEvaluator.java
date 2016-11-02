@@ -3,14 +3,18 @@ package edu.gslis.evaluation.evaluators;
 import java.util.Iterator;
 
 import edu.gslis.eval.Qrels;
-import edu.gslis.searchhits.SearchHitsBatch;
 import edu.gslis.queries.GQuery;
 import edu.gslis.searchhits.SearchHit;
 import edu.gslis.searchhits.SearchHits;
+import edu.gslis.searchhits.SearchHitsBatch;
 
-public class MAPEvaluator implements Evaluator {
+public class MAPEvaluator extends Evaluator {
+	
+	public MAPEvaluator(Qrels qrels) {
+		super(qrels);
+	}
 
-	public double evaluate(SearchHitsBatch batchResults, Qrels qrels) {
+	public double evaluate(SearchHitsBatch batchResults) {
 		return meanAveragePrecision(batchResults, qrels);
 	}
 	

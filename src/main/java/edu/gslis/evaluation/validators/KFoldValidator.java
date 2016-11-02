@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import edu.gslis.eval.Qrels;
 import edu.gslis.evaluation.evaluators.Evaluator;
 import edu.gslis.evaluation.running.QueryRunner;
 import edu.gslis.queries.GQueries;
@@ -37,7 +36,7 @@ public class KFoldValidator extends Validator {
 		this.k = k;
 	}
 
-	public SearchHitsBatch evaluate(long seed, GQueries queries, Evaluator evaluator, Qrels qrels) {
+	public SearchHitsBatch evaluate(long seed, GQueries queries, Evaluator evaluator) {
 		List<GQuery> queryList = new ArrayList<GQuery>();
 		Iterator<GQuery> queryIt = queries.iterator();
 		while (queryIt.hasNext())
@@ -76,7 +75,7 @@ public class KFoldValidator extends Validator {
 			
 			// Train
 			System.err.println("\tTraining...");
-			Map<String, Double> parameters = runner.sweep(trainingQueries, evaluator, qrels);
+			Map<String, Double> parameters = runner.sweep(trainingQueries, evaluator);
 
 			// Set up testing queries
 			GQueries testingQueries = new GQueriesJsonImpl();

@@ -9,15 +9,16 @@ import edu.gslis.searchhits.SearchHit;
 import edu.gslis.searchhits.SearchHits;
 import edu.gslis.searchhits.SearchHitsBatch;
 
-public class NDCGEvaluator implements Evaluator {
+public class NDCGEvaluator extends Evaluator {
 	
 	private int rank;
 	
-	public NDCGEvaluator() {
-		this(20);
+	public NDCGEvaluator(Qrels qrels) {
+		this(20, qrels);
 	}
 	
-	public NDCGEvaluator(int rank) {
+	public NDCGEvaluator(int rank, Qrels qrels) {
+		super(qrels);
 		setRankCutoff(rank);
 	}
 	
@@ -25,7 +26,7 @@ public class NDCGEvaluator implements Evaluator {
 		this.rank = rank;
 	}
 
-	public double evaluate(SearchHitsBatch batchResults, Qrels qrels) {
+	public double evaluate(SearchHitsBatch batchResults) {
 		return ndcg(rank, batchResults, qrels);
 	}
 	

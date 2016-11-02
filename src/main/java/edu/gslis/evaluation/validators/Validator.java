@@ -2,7 +2,6 @@ package edu.gslis.evaluation.validators;
 
 import java.util.Random;
 
-import edu.gslis.eval.Qrels;
 import edu.gslis.evaluation.evaluators.Evaluator;
 import edu.gslis.evaluation.running.QueryRunner;
 import edu.gslis.queries.GQueries;
@@ -22,11 +21,11 @@ public abstract class Validator {
 		this.numResults = numResults;
 	}
 	
-	public SearchHitsBatch evaluate(GQueries queries, Evaluator evaluator, Qrels qrels) {
+	public SearchHitsBatch evaluate(GQueries queries, Evaluator evaluator) {
 		Random r = new Random();
-		return evaluate(r.nextLong(), queries, evaluator, qrels);
+		return evaluate(r.nextLong(), queries, evaluator);
 	}
 	
-	public abstract SearchHitsBatch evaluate(long seed, GQueries queries, Evaluator evaluator, Qrels qrels);
+	public abstract SearchHitsBatch evaluate(long seed, GQueries queries, Evaluator evaluator);
 	
 }

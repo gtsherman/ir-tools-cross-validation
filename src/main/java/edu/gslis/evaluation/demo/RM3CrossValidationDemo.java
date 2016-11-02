@@ -44,7 +44,7 @@ public class RM3CrossValidationDemo {
 		KFoldValidator kfv = new KFoldValidator(rmRunner); // defaulting to 10-fold with 1000 results
 		
 		// Run the cross validation optimizing for MAP
-		SearchHitsBatch batchResults = kfv.evaluate(queries, new MAPEvaluator(), qrels);
+		SearchHitsBatch batchResults = kfv.evaluate(queries, new MAPEvaluator(qrels));
 
 		// Write the results
 		Iterator<String> qit = batchResults.queryIterator();

@@ -1,6 +1,5 @@
 package edu.gslis.evaluation.validators;
 
-import edu.gslis.eval.Qrels;
 import edu.gslis.evaluation.evaluators.Evaluator;
 import edu.gslis.evaluation.running.QueryRunner;
 import edu.gslis.queries.GQueries;
@@ -13,10 +12,10 @@ public class HoldoutValidator extends Validator {
 	}
 	
 	@Override
-	public SearchHitsBatch evaluate(long seed, GQueries queries, Evaluator evaluator, Qrels qrels) {
+	public SearchHitsBatch evaluate(long seed, GQueries queries, Evaluator evaluator) {
 		KFoldValidator validator = new KFoldValidator(runner);
 		validator.setNumFolds(2);
-		return validator.evaluate(seed, queries, evaluator, qrels);
+		return validator.evaluate(seed, queries, evaluator);
 	}
 
 }
