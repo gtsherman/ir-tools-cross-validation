@@ -10,7 +10,8 @@ import edu.gslis.evaluation.running.runners.support.ParameterizedResults;
 import edu.gslis.indexes.IndexWrapperIndriImpl;
 import edu.gslis.queries.GQueries;
 import edu.gslis.queries.GQuery;
-import edu.gslis.queries.expansion.FeedbackRelevanceModel;
+import edu.gslis.scoring.expansion.RM1Builder;
+import edu.gslis.scoring.expansion.RM3Builder;
 import edu.gslis.searchhits.SearchHits;
 import edu.gslis.searchhits.SearchHitsBatch;
 import edu.gslis.textrepresentation.FeatureVector;
@@ -70,7 +71,10 @@ public class RMRunner implements QueryRunner {
 	}
 	
 	private SearchHits getProcessedQuery(GQuery query, int numResults, Map<String, Double> params) {
-		double[] paramVals = {params.get(ORIG_QUERY_WEIGHT), params.get(FEEDBACK_DOCUMENTS), params.get(FEEDBACK_TERMS), numResults};
+		double[] paramVals = {params.get(ORIG_QUERY_WEIGHT),
+				params.get(FEEDBACK_DOCUMENTS),
+				params.get(FEEDBACK_TERMS),
+				numResults};
 		
 		if (!processedQueries.resultsExist(query, paramVals)) {
 			query.applyStopper(stopper);
@@ -84,22 +88,13 @@ public class RMRunner implements QueryRunner {
 				fbTerms = params.get(FEEDBACK_TERMS).intValue();
 			}
 
-			FeedbackRelevanceModel rm1 = new FeedbackRelevanceModel();
-			rm1.setDocCount(fbDocs);
-			rm1.setTermCount(fbTerms);
-			rm1.setIndex(index);
-			rm1.setStopper(stopper);
-			rm1.setOriginalQuery(query);
-			rm1.build();
-
-			FeatureVector rmVec = rm1.asGquery().getFeatureVector();
-			rmVec.normalize();
-
-			FeatureVector rm3 = FeatureVector.interpolate(query.getFeatureVector(), rmVec, params.get(ORIG_QUERY_WEIGHT));
+			RM1Builder rm1 = new RM1Builder(query, index, fbDocs, fbTerms);
+			RM3Builder rm3 = new RM3Builder(query, rm1);
+			FeatureVector rm3Vector = rm3.buildRelevanceModel(params.get(ORIG_QUERY_WEIGHT), stopper);
 			
 			GQuery newQuery = new GQuery();
 			newQuery.setTitle(query.getTitle());
-			newQuery.setFeatureVector(rm3);
+			newQuery.setFeatureVector(rm3Vector);
 			
 			SearchHits results = index.runQuery(newQuery, numResults);
 			processedQueries.addResults(results, query, paramVals);
