@@ -1,13 +1,7 @@
 package edu.gslis.evaluation.running.runners;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 
 import edu.gslis.docscoring.support.IndexBackedCollectionStats;
 import edu.gslis.evaluation.evaluators.Evaluator;
@@ -25,7 +19,7 @@ import edu.gslis.textrepresentation.FeatureVector;
 import edu.gslis.utils.Stopper;
 import edu.gslis.utils.retrieval.QueryResults;
 
-public class RMRunner implements QueryRunner {
+public class RMRunner extends QueryRunner {
 
 	public static final String ORIG_QUERY_WEIGHT = "original";
 	public static final String FEEDBACK_DOCUMENTS = "fbDocs";
@@ -34,20 +28,12 @@ public class RMRunner implements QueryRunner {
 	private IndexWrapperIndriImpl index;
 	private Stopper stopper;
 	
-	private LoadingCache<QueryParameters, SearchHits> processedQueries = CacheBuilder.newBuilder()
-			.softValues()
-			.build(
-					new CacheLoader<QueryParameters, SearchHits>() {
-						public SearchHits load(QueryParameters queryParams) throws Exception {
-							return processQuery(queryParams);
-						}
-					});
-	
 	public RMRunner(IndexWrapperIndriImpl index, Stopper stopper) {
 		this.index = index;
 		this.stopper = stopper;
 	}
 	
+	@Override
 	public Map<String, Double> sweep(GQueries queries, Evaluator evaluator) {
 		double maxMetric = 0.0;
 
@@ -77,33 +63,9 @@ public class RMRunner implements QueryRunner {
 		}
 		return bestParams;	
 	}
-
-	public SearchHitsBatch run(GQueries queries, int numResults, Map<String, Double> params) {
-		SearchHitsBatch batchResults = new SearchHitsBatch();
-		Iterator<GQuery> queryIt = queries.iterator();
-		while (queryIt.hasNext()) {
-			GQuery query = queryIt.next();
-			QueryParameters queryParams = new QueryParameters(query, numResults, params);
-			SearchHits results = getProcessedQuery(queryParams);
-			batchResults.setSearchHits(query.getTitle(), results);
-		}
-		return batchResults;
-	}
 	
-	private SearchHits getProcessedQuery(QueryParameters queryParams) {
-		// Get via cache
-		try {
-			return processedQueries.get(queryParams);
-		} catch (ExecutionException e) {
-			System.err.println("Error scoring query " + queryParams.getQuery().getTitle());
-			System.err.println(e.getStackTrace());
-		}
-		
-		// Default to zero, if we have an issue
-		return new SearchHits();
-	}
-	
-	private SearchHits processQuery(QueryParameters queryParams) {
+	@Override
+	public SearchHits runQuery(QueryParameters queryParams) {
 		GQuery query = queryParams.getQuery();
 		int numResults = queryParams.getNumResults();
 		Map<String, Double> params = queryParams.getParams();
