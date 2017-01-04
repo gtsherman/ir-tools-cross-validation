@@ -47,8 +47,8 @@ public class RMRunner extends QueryRunner {
 			double origWeight = origW / 10.0;
 			
 			currentParams.put(RMRunner.ORIG_QUERY_WEIGHT, origWeight);
-
-			SearchHitsBatch batchResults = run(queries, 1000, currentParams);
+			
+			SearchHitsBatch batchResults = run(queries, NUM_TRAINING_RESULTS, currentParams);
 			
 			double metricVal = evaluator.evaluate(batchResults);
 			if (metricVal > maxMetric) {

@@ -17,6 +17,16 @@ import edu.gslis.searchhits.SearchHitsBatch;
 public abstract class QueryRunner {
 
 	/**
+	 * The number of search results to retrieve during training runs. By default, use a low number
+	 * to improve performance.
+	 * 
+	 * <p>Setting this value as a variable allows us to be smarter about caching search results; any
+	 * result list not equal to <code>NUM_TRAINING_RESULTS</code> in size will likely not be seen
+	 * again and therefore need not be cached.
+	 */
+	public int NUM_TRAINING_RESULTS = 100;
+	
+	/**
 	 * The cache of query results. By default, this uses soft values (allowing the garbage collector
 	 * to handle cleanup) and calls the <code>runQuery</code> method to handle actual query
 	 * processing logic.
@@ -78,8 +88,13 @@ public abstract class QueryRunner {
 
 			SearchHits results;
 			try {
-				// Get via cache
-				results = getCache().get(queryParams);
+				if (numResults == NUM_TRAINING_RESULTS) {
+					// Get via cache
+					results = getCache().get(queryParams);
+				} else {
+					// Non-training runs do not need to be cached; process fresh
+					results = runQuery(queryParams);
+				}
 			} catch (ExecutionException e) {
 				System.err.println("Error scoring query " + queryParams.getQuery().getTitle());
 				System.err.println(e.getStackTrace());
