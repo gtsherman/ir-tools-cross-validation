@@ -1,5 +1,9 @@
 package edu.gslis.evaluation.running.runners.support;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import edu.gslis.queries.GQuery;
@@ -10,10 +14,23 @@ public class QueryParameters {
 	private int numResults;
 	private Map<String, Double> params;
 	
+	private int hash;
+	
 	public QueryParameters(GQuery query, int numResults, Map<String, Double> params) {
 		this.query = query;
 		this.numResults = numResults;
-		this.params = params;
+		setParams(params);
+	}
+	
+	/**
+	 * Perform a deep copy of the params object since the values may be reassigned in the original
+	 * @param params The params object to copy
+	 */
+	private void setParams(Map<String, Double> params) {
+		this.params = new HashMap<String, Double>();
+		for (String param : params.keySet()) {
+			this.params.put(param, params.get(param));
+		}
 	}
 	
 	public GQuery getQuery() {
@@ -34,9 +51,12 @@ public class QueryParameters {
 			QueryParameters k = (QueryParameters) obj;
 
 			for (String param : params.keySet()) {
-				// If param not in other, or if param in other is not equal, return false
-				if (!k.getParams().containsKey(param)
-						|| !k.getParams().get(param).equals(params.get(param))) {
+				// If param not in other, return false
+				if (!k.getParams().containsKey(param)) {
+					return false;
+				}
+				// If param value in other not equal to value here, return false
+				if (!k.getParams().get(param).equals(params.get(param))) {
 					return false;
 				}
 			}
@@ -57,13 +77,20 @@ public class QueryParameters {
 	
 	@Override
 	public int hashCode() {
-		String s = new String();
-		s += query.getTitle();
-		s += numResults;
-		for (double p : params.values()) {
-			s += p;
+		if (hash == 0) {
+			String s = new String();
+			s += query.getTitle();
+			s += numResults;
+			
+			List<Double> paramVals = new ArrayList<Double>(params.values());
+			Collections.sort(paramVals);
+			for (double p : paramVals) {
+				s += p;
+			}
+			
+			hash = s.hashCode();
 		}
-		return s.hashCode();
+		return hash;
 	}
 
 }
