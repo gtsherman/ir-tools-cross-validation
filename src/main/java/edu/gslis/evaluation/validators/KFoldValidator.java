@@ -16,14 +16,16 @@ import edu.gslis.searchhits.SearchHitsBatch;
 
 public class KFoldValidator extends Validator {
 	
-	protected int k;
+	public static final int DEFAULT_TEST_RESULTS = 1000;
+	
+	private int k;
 
 	public KFoldValidator(QueryRunner runner) {
-		this(runner, 10, 1000);
+		this(runner, 10, DEFAULT_TEST_RESULTS);
 	}
 	
 	public KFoldValidator(QueryRunner runner, int k) {
-		this(runner, k, 1000);
+		this(runner, k, DEFAULT_TEST_RESULTS);
 	}
 
 	public KFoldValidator(QueryRunner runner, int k, int numResults) {
