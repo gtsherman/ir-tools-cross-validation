@@ -25,6 +25,14 @@ public class PrecomputedSearchResults implements Iterable<String> {
 		interpreter = new SearchResultsDataInterpreter();
 	}
 	
+	public void addResult(String key, SearchHitsBatch batch) {
+		results.put(key, batch);
+	}
+	
+	/**
+	 * Add results read from the file, using the file name as key
+	 * @param file A file containing batch search results
+	 */
 	public void addResults(File file) {
 		if (file.isDirectory()) {
 			return;
@@ -32,7 +40,7 @@ public class PrecomputedSearchResults implements Iterable<String> {
 
 		FileDataSource data = new FileDataSource(file);
 		SearchHitsBatch batchResults = interpreter.build(data);
-		results.put(file.getName(), batchResults);
+		addResult(file.getName(), batchResults);
 	}
 	
 	public void addResults(File... files) {
