@@ -17,7 +17,6 @@ import edu.gslis.searchhits.SearchHits;
 import edu.gslis.searchhits.SearchHitsBatch;
 import edu.gslis.textrepresentation.FeatureVector;
 import edu.gslis.utils.Stopper;
-import edu.gslis.utils.retrieval.QueryResults;
 
 public class RMRunner extends QueryRunner {
 
@@ -86,11 +85,9 @@ public class RMRunner extends QueryRunner {
 		
 		SearchHits initialHits = index.runQuery(query, fbDocs);
 		
-		QueryResults queryResults = new QueryResults(query, initialHits);
-
 		RM1Builder rm1 = new StandardRM1Builder(fbDocs, fbTerms, collectionStats);
 		RM3Builder rm3 = new RM3Builder();
-		FeatureVector rm3Vector = rm3.buildRelevanceModel(queryResults, rm1, params.get(ORIG_QUERY_WEIGHT), stopper);
+		FeatureVector rm3Vector = rm3.buildRelevanceModel(query, initialHits, rm1, params.get(ORIG_QUERY_WEIGHT), stopper);
 		
 		GQuery newQuery = new GQuery();
 		newQuery.setTitle(query.getTitle());
