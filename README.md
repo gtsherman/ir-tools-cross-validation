@@ -1,6 +1,6 @@
 # Cross-validation
 
-Cross-validation framework for the ir-tools library.
+Cross-validation framework for the [ir-tools](https://github.com/uiucGSLIS/ir-tools) library.
 
 ## Adding to your project
 
